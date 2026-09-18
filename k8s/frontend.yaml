@@ -18,6 +18,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  namespace: padel-dev
   name: frontend-deployment
   labels:
     app: padel-frontend
