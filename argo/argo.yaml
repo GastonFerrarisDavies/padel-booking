@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: padel-platform-app
+  namespace: argocd
+spec:
+  project: default
+  
+  source:
+    repoURL: 'https://github.com/GastonFerrarisDavies/padel-booking.git'
+    targetRevision: main
+    path: k8s           
+  
+  destination:
+    server: 'https://kubernetes.default.svc' 
+    namespace: padel-dev
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true 
