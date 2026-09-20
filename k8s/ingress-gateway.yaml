@@ -7,7 +7,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - http: # <--- Omitimos el 'host:' para que acepte la IP directa
+  - http:
       paths:
       - path: /
         pathType: Prefix
