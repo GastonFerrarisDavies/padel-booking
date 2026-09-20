@@ -1,0 +1,87 @@
+name: CI & Update K8s Manifests
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "k8s/**"
+
+# Ningún permiso por defecto; cada job declara solo lo que necesita.
+permissions: {}
+
+jobs:
+  # 1. Build y push de la imagen a Docker Hub
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Tag inmutable y trazable al commit (7 primeros caracteres del SHA).
+      - name: Calcular tag de la imagen
+        id: meta
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # DOCKER_PASSWORD debe ser un Access Token de Docker Hub (Read & Write), no la contraseña de la cuenta.
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/padel-frontend:${{ steps.meta.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # 2. Actualiza la imagen en el manifiesto; Argo CD sincroniza el cambio desde main
+  update-manifest:
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # GITHUB_TOKEN de este job: es lo único que necesita para el push
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Actualizar imagen en k8s/frontend.yaml
+        env:
+          IMAGE: ${{ secrets.DOCKER_USERNAME }}/padel-frontend:${{ needs.build-and-publish.outputs.tag }}
+        run: |
+          # Reemplaza toda la línea "image:" del padel-frontend, sin depender del valor actual.
+          sed -i -E "s|^([[:space:]]*image:[[:space:]]*).*padel-frontend.*$|\1${IMAGE}|" k8s/frontend.yaml
+
+          # Si el sed no dejó la imagen esperada, el job falla.
+          grep -qF "image: ${IMAGE}" k8s/frontend.yaml
+
+      - name: Commit y push a main
+        env:
+          TAG: ${{ needs.build-and-publish.outputs.tag }}
+        run: |
+          if git diff --quiet k8s/frontend.yaml; then
+            echo "El manifiesto ya apunta a ${TAG}; no hay nada que subir."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add k8s/frontend.yaml
+          git commit -m "chore(gitops): actualizar imagen frontend a ${TAG} [skip ci]"
+
+          # Push simple: sin rebase, sin reintentos, sin force. Si main avanzó, el push
+          # se rechaza y el job falla sin más; se corrige con un nuevo push a main.
+          git push origin HEAD:main
