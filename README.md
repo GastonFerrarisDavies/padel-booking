@@ -1,4 +1,4 @@
-# 🎾 Padel Booking Platform: A Cloud-Native & DevSecOps Showcase
+# Padel Booking Platform: A Cloud-Native & DevSecOps Showcase
 
 [![CI Pipeline](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)](#)
 [![CD Pipeline](https://img.shields.io/badge/CD-Argo_CD-EF7B4D?style=for-the-badge&logo=argo&logoColor=white)](#)
@@ -7,7 +7,7 @@
 
 > An enterprise-grade, microservices-based booking system designed to demonstrate modern Cloud Engineering, GitOps deployment strategies, and "Security-as-Code" practices. 
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 This project transitions from traditional monolithic web development to a fully distributed, cloud-native architecture. It utilizes a **GitOps** approach as the single source of truth, ensuring infrastructure immutability and automated reconciliation.
 
@@ -22,7 +22,7 @@ This project transitions from traditional monolithic web development to a fully 
 
 ---
 
-## 🔒 DevSecOps & Best Practices Implemented
+## DevSecOps & Best Practices Implemented
 
 This repository is built with production-readiness in mind, showcasing key architectural decisions:
 
