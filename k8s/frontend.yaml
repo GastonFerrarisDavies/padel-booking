@@ -34,11 +34,9 @@ spec:
     spec:
       containers:
         - name: frontend-app
+          # El tag lo actualiza el workflow de CI (.github/workflows/ci.yml).
           image: padel-frontend:latest
-          
-          # Minikube: Local image download.
-          imagePullPolicy: Never 
-          
+
           ports:
             - containerPort: 80
           
