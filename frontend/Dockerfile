@@ -1,36 +1,41 @@
-# STAGE 1: Dependencies
+# Stage 1: Dependencies installation.
 
-FROM node:26-alpine AS dependencies
+ARG NODE_VERSION=24.13.0
 
-RUN apk add --no-cache libc6-compat
+FROM node:${NODE_VERSION} AS dependencies
+
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package*.json ./
 
-RUN npm ci
+RUN if [ -f package-lock.json ]; then \
+    npm ci; \
+  else \
+    echo "No lockfile found."; \
+    exit 1; \
+  fi
 
 
+# Stage 2: Build the static site (next.config.mjs: output "export" -> /app/out).
 
-# STAGE 2: Build
+FROM dependencies AS build
 
-FROM node:26-alpine AS builder
 WORKDIR /app
-
-COPY --from=dependencies /app/node_modules ./node_modules
 
 COPY . .
+
+ENV NODE_ENV=production
 
 RUN npm run build
 
 
+# Stage 3: Serve the static files with nginx.
 
-# STAGE 3: Deploy
-
-FROM nginx:alpine AS runner
+FROM nginx:alpine AS production
 
 RUN rm -rf /usr/share/nginx/html/*
 
-COPY --from=builder /app/out /usr/share/nginx/html
+COPY --from=build /app/out /usr/share/nginx/html
 
 EXPOSE 80
 
