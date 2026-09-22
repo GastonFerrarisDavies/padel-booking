@@ -26,6 +26,10 @@ COPY . .
 
 ENV NODE_ENV=production
 
+# NEXT_PUBLIC_* se inyecta en build time (export estático). Vacío => default "/api".
+ARG NEXT_PUBLIC_API_URL=""
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 RUN npm run build
 
 
@@ -34,6 +38,8 @@ RUN npm run build
 FROM nginx:alpine AS production
 
 RUN rm -rf /usr/share/nginx/html/*
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=build /app/out /usr/share/nginx/html
 
