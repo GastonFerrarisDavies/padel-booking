@@ -1,0 +1,109 @@
+name: CI Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+      - "!k8s/**"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: padel-frontend
+  BUILD_CONTEXT: ./frontend
+  MANIFEST: k8s/frontend.yaml
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Calcular tag de la imagen
+        id: meta
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Docker Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.BUILD_CONTEXT }}
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+          cache-from: type=gha,scope=${{ env.IMAGE_NAME }}
+          cache-to: type=gha,mode=max,scope=${{ env.IMAGE_NAME }}
+
+  update-manifest:
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Actualizar tag en el manifiesto y hacer push (con reintentos)
+        env:
+          TAG: ${{ needs.build-and-publish.outputs.tag }}
+          DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          PATTERN='^([[:space:]]*image:[[:space:]]*)[^[:space:]]*/'"${IMAGE_NAME}"'(:[^[:space:]]*)?[[:space:]]*$'
+
+          for attempt in 1 2 3 4 5; do
+            git fetch --depth=1 origin main
+            git reset --hard origin/main
+
+            matches=$(grep -cE "$PATTERN" "$MANIFEST" || true)
+            if [ "$matches" -ne 1 ]; then
+              echo "::error::Se esperaba exactamente 1 línea de imagen para ${IMAGE_NAME} en ${MANIFEST}, se encontraron ${matches}."
+              exit 1
+            fi
+
+            sed -i -E "s|${PATTERN}|\1${DOCKER_USER}/${IMAGE_NAME}:${TAG}|" "$MANIFEST"
+
+            if git diff --quiet -- "$MANIFEST"; then
+              echo "El manifiesto ya apunta a ${IMAGE_NAME}:${TAG}."
+              exit 0
+            fi
+
+            git add "$MANIFEST"
+            git commit -m "chore(gitops): actualizar ${IMAGE_NAME} a ${TAG} [skip ci]"
+
+            if git push origin HEAD:main; then
+              echo "Push OK en el intento ${attempt}."
+              exit 0
+            fi
+
+            echo "::warning::Push rechazado (intento ${attempt}/5), reintentando..."
+            sleep $(( attempt * 3 + RANDOM % 5 ))
+          done
+
+          echo "::error::No se pudo hacer push tras 5 intentos."
+          exit 1

@@ -1,0 +1,233 @@
+# k8s/02-mysql-statefulsets.yaml
+#
+# One MySQL instance per microservice (database-per-service). Each
+# StatefulSet owns its own PersistentVolumeClaim (via volumeClaimTemplates)
+# and is only reachable inside the cluster through its ClusterIP Service -
+# no NodePort/LoadBalancer is exposed for any database.
+
+# ---------------------------------------------------------------------------
+# user-db
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-db
+  namespace: padel-dev
+  labels:
+    app: user-db
+spec:
+  type: ClusterIP
+  selector:
+    app: user-db
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: user-db
+  namespace: padel-dev
+  labels:
+    app: user-db
+spec:
+  serviceName: user-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-db
+  template:
+    metadata:
+      labels:
+        app: user-db
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: USER_DB_PASSWORD
+            - name: MYSQL_DATABASE
+              value: user_service_db
+            - name: MYSQL_USER
+              value: user_service
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: USER_DB_PASSWORD
+          volumeMounts:
+            - name: user-db-data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+  volumeClaimTemplates:
+    - metadata:
+        name: user-db-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+# ---------------------------------------------------------------------------
+# court-db
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: court-db
+  namespace: padel-dev
+  labels:
+    app: court-db
+spec:
+  type: ClusterIP
+  selector:
+    app: court-db
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: court-db
+  namespace: padel-dev
+  labels:
+    app: court-db
+spec:
+  serviceName: court-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: court-db
+  template:
+    metadata:
+      labels:
+        app: court-db
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: COURT_DB_PASSWORD
+            - name: MYSQL_DATABASE
+              value: court_service_db
+            - name: MYSQL_USER
+              value: court_service
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: COURT_DB_PASSWORD
+          volumeMounts:
+            - name: court-db-data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+  volumeClaimTemplates:
+    - metadata:
+        name: court-db-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+# ---------------------------------------------------------------------------
+# booking-db
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-db
+  namespace: padel-dev
+  labels:
+    app: booking-db
+spec:
+  type: ClusterIP
+  selector:
+    app: booking-db
+  ports:
+    - port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: booking-db
+  namespace: padel-dev
+  labels:
+    app: booking-db
+spec:
+  serviceName: booking-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking-db
+  template:
+    metadata:
+      labels:
+        app: booking-db
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: BOOKING_DB_PASSWORD
+            - name: MYSQL_DATABASE
+              value: booking_service_db
+            - name: MYSQL_USER
+              value: booking_service
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: BOOKING_DB_PASSWORD
+          volumeMounts:
+            - name: booking-db-data
+              mountPath: /var/lib/mysql
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+  volumeClaimTemplates:
+    - metadata:
+        name: booking-db-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

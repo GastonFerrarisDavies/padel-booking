@@ -1,0 +1,194 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: padel-dev
+  labels:
+    app: user-service
+spec:
+  type: ClusterIP
+  selector:
+    app: user-service
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: padel-dev
+  labels:
+    app: user-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: tawanchai/padel-user-service:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: DB_HOST
+              value: user-db
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USERNAME
+              value: user_service
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: USER_DB_PASSWORD
+            - name: DB_DATABASE
+              value: user_service_db
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: JWT_SECRET
+            - name: JWT_EXPIRES_IN
+              value: 3600s
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: court-service
+  namespace: padel-dev
+  labels:
+    app: court-service
+spec:
+  type: ClusterIP
+  selector:
+    app: court-service
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: court-service
+  namespace: padel-dev
+  labels:
+    app: court-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: court-service
+  template:
+    metadata:
+      labels:
+        app: court-service
+    spec:
+      containers:
+        - name: court-service
+          image: tawanchai/padel-court-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: DB_HOST
+              value: court-db
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USER
+              value: court_service
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: COURT_DB_PASSWORD
+            - name: DB_NAME
+              value: court_service_db
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+
+---
+# ---------------------------------------------------------------------------
+# booking-service (Go)
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-service
+  namespace: padel-dev
+  labels:
+    app: booking-service
+spec:
+  type: ClusterIP
+  selector:
+    app: booking-service
+  ports:
+    - port: 80
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service
+  namespace: padel-dev
+  labels:
+    app: booking-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: booking-service
+  template:
+    metadata:
+      labels:
+        app: booking-service
+    spec:
+      containers:
+        - name: booking-service
+          image: tawanchai/padel-booking-service:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: PORT
+              value: "8081"
+            - name: DB_HOST
+              value: booking-db
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USER
+              value: booking_service
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: BOOKING_DB_PASSWORD
+            - name: DB_NAME
+              value: booking_service_db
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"

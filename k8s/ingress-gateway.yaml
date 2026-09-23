@@ -5,10 +5,42 @@ metadata:
   namespace: padel-dev
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/limit-rps: "5"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      limit_req_status 429;
 spec:
   rules:
   - http:
       paths:
+      # 1. User Microservice (NestJS)
+      - path: /api/users
+        pathType: Prefix
+        backend:
+          service:
+            name: user-service
+            port:
+              number: 3000
+
+      # 2. Court Microservice (GoLang)
+      - path: /api/courts
+        pathType: Prefix
+        backend:
+          service:
+            name: court-service
+            port:
+              number: 8080
+
+      # 3. Booking Microservice (GoLang)
+      - path: /api/bookings
+        pathType: Prefix
+        backend:
+          service:
+            name: booking-service
+            port:
+              number: 8080
+
+      # 4. FRONTEND (Next.js)
       - path: /
         pathType: Prefix
         backend:
