@@ -57,15 +57,25 @@ If you want to spin up the current architecture locally using Minikube:
    ```bash
    minikube start
    minikube addons enable ingress
-
+   ```
 
 2. **Apply the GitOps Observer (Argo CD)**
-    ``` bash
+    ```bash
     kubectl create namespace argocd
-    kubectl apply -n argocd -f [https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml](https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml)
-    kubectl apply -f argocd/argo.yaml
+    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    kubectl apply -f argo/argo.yaml
+    ```
 
-3. **Access the Application**
-    minikube service frontend-service -n padel-dev
+3. **Access the Application (through the Ingress)**
 
-    Which creates a tunnel with a public ip to access the app.
+    The frontend calls the API on the same origin (`/api/...`), so the app must be reached through the NGINX Ingress Controller, which routes `/api/*` to the microservices and everything else to the frontend.
+
+    ```bash
+    # Option A: keep it running in a separate terminal (as administrator), then open http://127.0.0.1
+    minikube tunnel
+
+    # Option B: then open http://localhost:8080
+    kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
+    ```
+
+    > ⚠️ Do **not** use `minikube service frontend-service -n padel-dev`: it tunnels straight to the frontend's Nginx, bypassing the Ingress, so every `/api/*` request returns **404**.

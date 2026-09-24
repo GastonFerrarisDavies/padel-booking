@@ -1,7 +1,3 @@
-# Dos Ingress separados: las anotaciones aplican a TODO el recurso, y el
-# rewrite de la API no debe tocar las rutas del frontend (/_next/static, /login...).
-
-# 1. API: /api/<recurso>... -> <servicio>/<recurso>... (se quita solo el prefijo /api)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
