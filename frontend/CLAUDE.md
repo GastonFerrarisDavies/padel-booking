@@ -26,8 +26,7 @@ Documentación técnica y reglas de arquitectura del frontend. Leer antes de toc
 ```
 frontend/
 ├─ api/
-│  ├─ utils.jsx        # cliente HTTP: base URL, token, interceptores, ApiError, timeout
-│  └─ mock.js          # backend en memoria (NEXT_PUBLIC_API_MOCK=true)
+│  └─ utils.jsx        # cliente HTTP: base URL, token, interceptores, ApiError, timeout
 ├─ entity/             # servicios por dominio: court.js, booking.js, user.js, auth.js, stats.js
 └─ src/
    ├─ app/             # rutas (thin: componen componentes, no contienen lógica)
@@ -79,9 +78,6 @@ Base: `NEXT_PUBLIC_API_URL` (default `/api`). Auth por `Authorization: Bearer <t
 | GET | `/dashboard/stats` | KPIs + serie de ingresos |
 
 Modelos: `Court { id, name, surface, indoor, pricePerHour, status, rating, reviewsCount }`, `Booking { id, courtId, courtName, playerName, date, startTime, endTime, status, price }`, `User { id, name, email, role, active, createdAt }`. Si el backend real difiere, adaptar **solo** `entity/*` (mapear a estos modelos).
-
-Modo demo sin backend: `NEXT_PUBLIC_API_MOCK=true` (login `admin@padel.com` / `admin123`).
-
 ## 4. Roles
 
 `OWNER` (todo, incluido cambiar roles) · `ADMIN` (canchas, horarios, reservas, ver usuarios) · `PLAYER` (sin acceso al dashboard). Constantes en `src/lib/constants.js`.
@@ -131,9 +127,6 @@ npm run dev      # desarrollo (usar .env.local, ver .env.example)
 npm run build    # genera ./out (estático)
 npm run lint
 ```
-
-Demo sin backend (PowerShell): `$env:NEXT_PUBLIC_API_MOCK='true'; npm run dev`.
-
 ## 7. Checklist para nuevas features
 
 1. ¿El dato viene de un backend? → función nueva en `entity/<dominio>.js`.

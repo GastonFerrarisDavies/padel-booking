@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
 
-const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === "true";
-
 /** Formulario de acceso para Owner/Admin. Al autenticarse, AuthProvider cambia de estado y se redirige. */
 export function LoginForm() {
   const { status, login } = useAuth();
@@ -50,7 +48,6 @@ export function LoginForm() {
         </Field>
 
         {signIn.error && <Alert>{signIn.error.message}</Alert>}
-        {IS_MOCK && <Alert tone="info">Modo demo: <strong>admin@padel.com</strong> / <strong>admin123</strong></Alert>}
 
         <Button type="submit" size="lg" loading={signIn.isPending || status === "loading"} leadingIcon={<LogIn className="size-5" />}>
           Ingresar

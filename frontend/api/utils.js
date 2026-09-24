@@ -5,7 +5,6 @@
 
 // `||` (no `??`): un ARG de Docker vacío llega como "" y debe caer al default.
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || "/api").replace(/\/+$/, "");
-const USE_MOCK = process.env.NEXT_PUBLIC_API_MOCK === "true";
 const DEFAULT_TIMEOUT_MS = 15_000;
 
 /* -------------------------------------------------------------------------- */
@@ -183,19 +182,14 @@ async function request(method, path, { params, body, signal, timeout = DEFAULT_T
   let payload;
   let status;
   try {
-    if (USE_MOCK) {
-      const { mockRequest } = await import("./mock");
-      ({ status, payload } = await mockRequest(ctx));
-    } else {
-      const response = await fetch(ctx.url, {
-        method,
-        headers: ctx.headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: withTimeout(signal, timeout),
-      });
-      status = response.status;
-      payload = await parseBody(response);
-    }
+    const response = await fetch(ctx.url, {
+      method,
+      headers: ctx.headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: withTimeout(signal, timeout),
+    });
+    status = response.status;
+    payload = await parseBody(response);
   } catch (cause) {
     if (cause?.name === "AbortError" && signal?.aborted) throw cause; // cancelación del caller
     const error =
