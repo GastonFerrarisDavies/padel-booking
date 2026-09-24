@@ -10,6 +10,11 @@ function createApp() {
   app.disable('x-powered-by');
   app.use(express.json({ limit: '100kb' }));
 
+  app.use((req, res, next) => {
+  console.log(`[DEBUG INGRESS] Petición entrante: ${req.method} ${req.url}`);
+  next();
+  });
+
   app.use(routes);
 
   app.use(notFound);
