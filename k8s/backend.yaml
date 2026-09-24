@@ -42,7 +42,7 @@ spec:
               value: user-db
             - name: DB_PORT
               value: "3306"
-            - name: DB_USERNAME
+            - name: DB_USER
               value: user_service
             - name: DB_PASSWORD
               valueFrom:
