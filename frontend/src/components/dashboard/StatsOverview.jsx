@@ -18,7 +18,9 @@ import { BookingsTable } from "./BookingsTable";
 /** Vista "Resumen" del dashboard (Client Component). */
 export function StatsOverview() {
   const today = useToday();
-  const stats = useQuery(["stats"], ({ signal }) => getDashboardStats({ signal }));
+  const stats = useQuery(["stats", today], ({ signal }) => getDashboardStats({ date: today }, { signal }), {
+    enabled: Boolean(today),
+  });
   const todayBookings = useQuery(["bookings", today], ({ signal }) => getBookings({ date: today }, { signal }), {
     enabled: Boolean(today),
   });

@@ -10,6 +10,7 @@ const router = Router();
 router.use(authenticate, requireRole('OWNER', 'ADMIN'));
 
 router.get('/', usersController.list);
+router.get('/stats', usersController.stats); // before '/:id'
 router.get('/:id', usersController.getById);
 router.patch('/:id', usersController.update);
 

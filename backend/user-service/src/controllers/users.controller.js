@@ -19,4 +19,8 @@ async function update(req, res) {
   res.json(await userService.update(req.user, req.params.id, { role, active }));
 }
 
-module.exports = { list, getById, update };
+async function stats(req, res) {
+  res.json(await userService.stats());
+}
+
+module.exports = { list, getById, update, stats };

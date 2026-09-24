@@ -97,4 +97,23 @@ async function update(actor, id, { role, active }) {
   return findById(id);
 }
 
-module.exports = { ROLES, toUser, findById, findCredentialsByEmail, list, create, update };
+/** % change rounded to one decimal; 0 without a baseline. */
+function percentDelta(current, previous) {
+  return previous === 0 ? 0 : Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
+/** GET /users/stats — new PLAYER accounts in the last 7 days vs. the 7 days before. */
+async function stats() {
+  const [[row]] = await pool.query(
+    `SELECT COALESCE(SUM(created_at >= NOW() - INTERVAL 7 DAY), 0) AS current,
+            COALESCE(SUM(created_at <  NOW() - INTERVAL 7 DAY), 0) AS previous
+       FROM users
+      WHERE role = 'PLAYER' AND created_at >= NOW() - INTERVAL 14 DAY`,
+  );
+  // SUM() comes back as DECIMAL, which mysql2 returns as a string.
+  const current = Number(row.current);
+  const previous = Number(row.previous);
+  return { newUsers: current, newUsersDelta: percentDelta(current, previous) };
+}
+
+module.exports = { ROLES, toUser, findById, findCredentialsByEmail, list, create, update, stats };

@@ -117,6 +117,81 @@ func (h *AvailabilityHandler) Availability(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, result)
 }
 
+type occupancyResponse struct {
+	Date           string  `json:"date"`
+	Occupancy      float64 `json:"occupancy"`      // 0-100
+	OccupancyDelta float64 `json:"occupancyDelta"` // points vs. same weekday last week
+}
+
+// Occupancy handles GET /courts/occupancy?date=YYYY-MM-DD: booked minutes over
+// the opening minutes of every AVAILABLE court that day, as a percentage, and
+// its change in points versus the same weekday of the previous week.
+func (h *AvailabilityHandler) Occupancy(w http.ResponseWriter, r *http.Request) {
+	date, err := time.Parse("2006-01-02", r.URL.Query().Get("date"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid or missing date (expected YYYY-MM-DD)")
+		return
+	}
+
+	current, err := h.occupancy(r, date)
+	if err == nil {
+		var previous float64
+		if previous, err = h.occupancy(r, date.AddDate(0, 0, -7)); err == nil {
+			writeJSON(w, http.StatusOK, occupancyResponse{
+				Date:           date.Format("2006-01-02"),
+				Occupancy:      current,
+				OccupancyDelta: current - previous,
+			})
+			return
+		}
+	}
+
+	// Unlike availability, occupancy is meaningless without booking data: fail closed.
+	log.Printf("court-service: occupancy: %v", err)
+	writeError(w, http.StatusBadGateway, "failed to compute occupancy")
+}
+
+func (h *AvailabilityHandler) occupancy(r *http.Request, date time.Time) (float64, error) {
+	var courts []models.Court
+	if err := h.db.WithContext(r.Context()).Where("status = ?", models.CourtStatusAvailable).Find(&courts).Error; err != nil {
+		return 0, fmt.Errorf("listing courts: %w", err)
+	}
+	schedules, err := h.schedulesByComplex(courts, int(date.Weekday()))
+	if err != nil {
+		return 0, fmt.Errorf("loading schedules: %w", err)
+	}
+	booked, err := h.bookings.ActiveByCourt(r.Context(), date.Format("2006-01-02"))
+	if err != nil {
+		return 0, fmt.Errorf("fetching bookings: %w", err)
+	}
+
+	capacity, used := 0, 0
+	for _, court := range courts {
+		schedule, ok := schedules[court.SportComplexID]
+		if !ok {
+			continue
+		}
+		open, errOpen := parseClock(schedule.OpenTime)
+		closeAt, errClose := parseClock(schedule.CloseTime)
+		if errOpen != nil || errClose != nil || closeAt <= open {
+			continue
+		}
+		capacity += closeAt - open
+		for _, b := range booked[strconv.FormatUint(uint64(court.ID), 10)] {
+			start, errS := parseClock(b.StartTime)
+			end, errE := parseClock(b.EndTime)
+			if errS == nil && errE == nil {
+				used += max(0, min(end, closeAt)-max(start, open))
+			}
+		}
+	}
+
+	if capacity == 0 {
+		return 0, nil
+	}
+	return math.Round(float64(used) / float64(capacity) * 100), nil
+}
+
 func (h *AvailabilityHandler) schedulesByComplex(courts []models.Court, weekday int) (map[uint]models.OpeningSchedule, error) {
 	byComplex := make(map[uint]models.OpeningSchedule)
 	if len(courts) == 0 {

@@ -32,6 +32,7 @@ func New(db *gorm.DB, bookingsClient *bookings.Client) http.Handler {
 	r.Route("/courts", func(r chi.Router) {
 		r.Get("/", courtHandler.List)
 		r.Get("/availability", availabilityHandler.Availability)
+		r.Get("/occupancy", availabilityHandler.Occupancy)
 		r.Post("/", courtHandler.Create)
 		r.Get("/{id}", courtHandler.Get)
 		r.Put("/{id}", courtHandler.Update)

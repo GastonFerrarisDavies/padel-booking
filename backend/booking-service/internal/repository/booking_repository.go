@@ -98,6 +98,38 @@ func (r *BookingRepository) Create(ctx context.Context, b models.Booking) (model
 	return b, nil
 }
 
+// DailyTotal aggregates the non-cancelled bookings of a single day.
+type DailyTotal struct {
+	Revenue  float64
+	Bookings int
+}
+
+// DailyTotals returns revenue and booking count per date ("YYYY-MM-DD") in
+// [from, to], excluding cancelled bookings. Days without bookings are absent.
+func (r *BookingRepository) DailyTotals(ctx context.Context, from, to string) (map[string]DailyTotal, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT DATE_FORMAT(date, '%Y-%m-%d'), COALESCE(SUM(price), 0), COUNT(*)
+		FROM bookings
+		WHERE date BETWEEN ? AND ? AND status <> ?
+		GROUP BY date
+	`, from, to, models.StatusCancelled)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	totals := make(map[string]DailyTotal)
+	for rows.Next() {
+		var day string
+		var t DailyTotal
+		if err := rows.Scan(&day, &t.Revenue, &t.Bookings); err != nil {
+			return nil, err
+		}
+		totals[day] = t
+	}
+	return totals, rows.Err()
+}
+
 func (r *BookingRepository) UpdateStatus(ctx context.Context, id string, status models.BookingStatus) (models.Booking, error) {
 	res, err := r.db.ExecContext(ctx, `UPDATE bookings SET status = ? WHERE id = ?`, status, id)
 	if err != nil {

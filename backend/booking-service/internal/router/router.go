@@ -31,6 +31,7 @@ func New(db *sql.DB) http.Handler {
 	r.Route("/bookings", func(r chi.Router) {
 		r.Get("/", bookingHandler.List)
 		r.Post("/", bookingHandler.Create)
+		r.Get("/stats", bookingHandler.Stats)
 		r.Patch("/{id}", bookingHandler.UpdateStatus)
 	})
 

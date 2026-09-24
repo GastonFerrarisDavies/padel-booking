@@ -8,7 +8,28 @@ import { http } from "@api/utils";
  *   revenueByDay: Array<{ date: string, value: number }> }} DashboardStats
  */
 
-/** @returns {Promise<DashboardStats>} */
-export function getDashboardStats(options) {
-  return http.get("/dashboard/stats", options);
+/**
+ * Cada microservicio expone las métricas de su dominio; acá se combinan.
+ * `date` es el "hoy" del navegador (YYYY-MM-DD): el backend no conoce la zona horaria del club.
+ *
+ * @param {{ date: string }} params
+ * @returns {Promise<DashboardStats>}
+ */
+export async function getDashboardStats({ date }, { signal } = {}) {
+  const [bookings, courts, users] = await Promise.all([
+    http.get("/bookings/stats", { signal, params: { date } }),
+    http.get("/courts/occupancy", { signal, params: { date } }),
+    http.get("/users/stats", { signal }),
+  ]);
+  return {
+    revenue: bookings.revenue,
+    revenueDelta: bookings.revenueDelta,
+    bookings: bookings.bookings,
+    bookingsDelta: bookings.bookingsDelta,
+    revenueByDay: bookings.revenueByDay,
+    occupancy: courts.occupancy,
+    occupancyDelta: courts.occupancyDelta,
+    newUsers: users.newUsers,
+    newUsersDelta: users.newUsersDelta,
+  };
 }
