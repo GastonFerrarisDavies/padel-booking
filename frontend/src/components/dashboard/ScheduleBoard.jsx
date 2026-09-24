@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { CalendarX2, ChevronLeft, ChevronRight } from "lucide-react";
-import { cancelBooking, getBookings } from "@entity/booking";
-import { getCourts } from "@entity/court";
+import { cancelBooking, getBookings } from "@api/entity/booking";
+import { getCourts } from "@api/entity/court";
 import { useMutation } from "@/hooks/useMutation";
 import { useQuery } from "@/hooks/useQuery";
 import { useToday } from "@/hooks/useToday";

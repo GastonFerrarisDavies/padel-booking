@@ -9,11 +9,9 @@ metadata:
   namespace: padel-dev
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/limit-rps: "5"
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      limit_req_status 429;
 spec:
   ingressClassName: nginx
   rules:

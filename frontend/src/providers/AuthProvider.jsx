@@ -2,7 +2,7 @@
 
 import { createContext, use, useCallback, useMemo, useSyncExternalStore } from "react";
 import { tokenStorage } from "@api/utils";
-import { getSession, login as loginRequest, logout as logoutRequest } from "@entity/auth";
+import { getSession, login as loginRequest, logout as logoutRequest } from "@api/entity/auth";
 import { useQuery } from "@/hooks/useQuery";
 
 const AuthContext = createContext(null);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createCourt, updateCourt } from "@entity/court";
+import { createCourt, updateCourt } from "@api/entity/court";
 import { useMutation } from "@/hooks/useMutation";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";

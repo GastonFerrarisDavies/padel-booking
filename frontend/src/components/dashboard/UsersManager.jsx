@@ -2,7 +2,7 @@
 
 import { useDeferredValue, useState } from "react";
 import { Search, UserRoundX } from "lucide-react";
-import { getUsers, setUserActive, updateUserRole } from "@entity/user";
+import { getUsers, setUserActive, updateUserRole } from "@api/entity/user";
 import { useMutation } from "@/hooks/useMutation";
 import { useQuery } from "@/hooks/useQuery";
 import { useAuth } from "@/providers/AuthProvider";

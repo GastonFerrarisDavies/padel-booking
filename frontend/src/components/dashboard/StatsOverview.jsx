@@ -1,8 +1,8 @@
 "use client";
 
 import { CalendarCheck, CalendarX2, CircleDollarSign, Gauge, UserPlus } from "lucide-react";
-import { getBookings } from "@entity/booking";
-import { getDashboardStats } from "@entity/stats";
+import { getBookings } from "@api/entity/booking";
+import { getDashboardStats } from "@api/entity/stats";
 import { useQuery } from "@/hooks/useQuery";
 import { useToday } from "@/hooks/useToday";
 import { BarChart } from "@/components/ui/BarChart";

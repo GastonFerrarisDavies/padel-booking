@@ -8,10 +8,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"gorm.io/gorm"
 
+	"court-service/internal/bookings"
 	"court-service/internal/handlers"
 )
 
-func New(db *gorm.DB) http.Handler {
+func New(db *gorm.DB, bookingsClient *bookings.Client) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -26,10 +27,11 @@ func New(db *gorm.DB) http.Handler {
 
 	courtHandler := handlers.NewCourtHandler(db)
 	complexHandler := handlers.NewComplexHandler(db)
+	availabilityHandler := handlers.NewAvailabilityHandler(db, bookingsClient)
 
 	r.Route("/courts", func(r chi.Router) {
 		r.Get("/", courtHandler.List)
-		r.Get("/availability", courtHandler.Availability)
+		r.Get("/availability", availabilityHandler.Availability)
 		r.Post("/", courtHandler.Create)
 		r.Get("/{id}", courtHandler.Get)
 		r.Put("/{id}", courtHandler.Update)

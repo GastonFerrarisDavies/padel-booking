@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LandPlot, Pencil, Plus, Trash2 } from "lucide-react";
-import { deleteCourt, getCourts, setCourtStatus } from "@entity/court";
+import { deleteCourt, getCourts, setCourtStatus } from "@api/entity/court";
 import { useMutation } from "@/hooks/useMutation";
 import { useQuery } from "@/hooks/useQuery";
 import { CourtCard } from "@/components/court/CourtCard";

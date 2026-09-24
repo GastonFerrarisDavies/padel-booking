@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarX2 } from "lucide-react";
-import { getAvailableCourts } from "@entity/court";
+import { getAvailableCourts } from "@api/entity/court";
 import { useQuery } from "@/hooks/useQuery";
 import { useToday } from "@/hooks/useToday";
 import { Button } from "@/components/ui/Button";

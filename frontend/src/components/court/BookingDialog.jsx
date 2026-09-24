@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays, CircleCheck, Clock, MapPin } from "lucide-react";
-import { createBooking } from "@entity/booking";
+import { createBooking } from "@api/entity/booking";
 import { useMutation } from "@/hooks/useMutation";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";

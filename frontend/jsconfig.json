@@ -3,7 +3,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@api/*": ["./api/*"],
-      "@entity/*": ["./entity/*"]
+      "@entity/*": ["api/entity/*"]
     }
   }
 }

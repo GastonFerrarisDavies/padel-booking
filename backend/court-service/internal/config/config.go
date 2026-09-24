@@ -14,16 +14,19 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
+	// BookingServiceURL is used by /courts/availability to discard booked slots.
+	BookingServiceURL string
 }
 
 func Load() Config {
 	return Config{
-		Port:       getEnv("PORT", "8080"),
-		DBHost:     getEnv("DB_HOST", "127.0.0.1"),
-		DBPort:     getEnv("DB_PORT", "3306"),
-		DBUser:     getEnv("DB_USER", "root"),
-		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBName:     getEnv("DB_NAME", "court_service_db"),
+		Port:              getEnv("PORT", "8080"),
+		DBHost:            getEnv("DB_HOST", "127.0.0.1"),
+		DBPort:            getEnv("DB_PORT", "3306"),
+		DBUser:            getEnv("DB_USER", "root"),
+		DBPassword:        getEnv("DB_PASSWORD", ""),
+		DBName:            getEnv("DB_NAME", "court_service_db"),
+		BookingServiceURL: getEnv("BOOKING_SERVICE_URL", "http://booking-service"),
 	}
 }
 
