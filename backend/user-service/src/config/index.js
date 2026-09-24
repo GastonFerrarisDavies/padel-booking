@@ -18,17 +18,28 @@ const config = Object.freeze({
     database: process.env.DB_DATABASE,
     connectionLimit: toInt(process.env.DB_POOL_SIZE, 10),
   }),
+  jwt: Object.freeze({
+    secret: process.env.JWT_SECRET,
+    expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+  }),
+  // Optional bootstrap account: created as OWNER only if no OWNER exists yet.
+  owner: Object.freeze({
+    name: process.env.OWNER_NAME || 'Owner',
+    email: process.env.OWNER_EMAIL,
+    password: process.env.OWNER_PASSWORD,
+  }),
 });
 
-const REQUIRED_DB_SETTINGS = {
+const REQUIRED_SETTINGS = {
   DB_HOST: config.db.host,
   DB_USER: config.db.user,
   DB_PASSWORD: config.db.password,
   DB_DATABASE: config.db.database,
+  JWT_SECRET: config.jwt.secret,
 };
 
 function assertConfig() {
-  const missing = Object.keys(REQUIRED_DB_SETTINGS).filter((name) => !REQUIRED_DB_SETTINGS[name]);
+  const missing = Object.keys(REQUIRED_SETTINGS).filter((name) => !REQUIRED_SETTINGS[name]);
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }

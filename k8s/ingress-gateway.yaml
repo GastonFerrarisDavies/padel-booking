@@ -1,46 +1,63 @@
+# Dos Ingress separados: las anotaciones aplican a TODO el recurso, y el
+# rewrite de la API no debe tocar las rutas del frontend (/_next/static, /login...).
+
+# 1. API: /api/<recurso>... -> <servicio>/<recurso>... (se quita solo el prefijo /api)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: padel-ingress
+  name: padel-api-ingress
   namespace: padel-dev
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/limit-rps: "5"
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       limit_req_status 429;
 spec:
+  ingressClassName: nginx
   rules:
   - http:
       paths:
-      # 1. User Microservice (NestJS)
-      - path: /api/users
-        pathType: Prefix
+      # User Microservice (Node) — /users, /auth, /dashboard
+      - path: /api/((?:users|auth|dashboard).*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: user-service
             port:
-              number: 3000
+              number: 80
 
-      # 2. Court Microservice (GoLang)
-      - path: /api/courts
-        pathType: Prefix
+      # Court Microservice (Go)
+      - path: /api/(courts.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: court-service
             port:
-              number: 8080
+              number: 80
 
-      # 3. Booking Microservice (GoLang)
-      - path: /api/bookings
-        pathType: Prefix
+      # Booking Microservice (Go)
+      - path: /api/(bookings.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: booking-service
             port:
-              number: 8080
+              number: 80
 
-      # 4. FRONTEND (Next.js)
+---
+# 2. FRONTEND (export estático servido por nginx): sin rewrite.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: padel-web-ingress
+  namespace: padel-dev
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
       - path: /
         pathType: Prefix
         backend:

@@ -58,6 +58,19 @@ spec:
                   key: JWT_SECRET
             - name: JWT_EXPIRES_IN
               value: 3600s
+            # Cuenta OWNER inicial (opcional): solo se crea si todavía no hay un OWNER.
+            - name: OWNER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: OWNER_EMAIL
+                  optional: true
+            - name: OWNER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: OWNER_PASSWORD
+                  optional: true
           resources:
             requests:
               memory: "128Mi"

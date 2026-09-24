@@ -14,6 +14,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   enableKeepAlive: true,
   connectTimeout: 5000,
+  // MySQL (container default) stores/returns timestamps in UTC; parse them as UTC, not local time.
+  timezone: 'Z',
 });
 
 async function ping() {

@@ -2,10 +2,13 @@
 
 const { Router } = require('express');
 const healthRoutes = require('./health.routes');
+const authRoutes = require('./auth.routes');
+const usersRoutes = require('./users.routes');
 
 const router = Router();
 
 router.use('/health-check', healthRoutes);
-// Register new feature routers here, e.g. router.use('/users', userRoutes);
+router.use('/auth', authRoutes);
+router.use('/users', usersRoutes);
 
 module.exports = router;

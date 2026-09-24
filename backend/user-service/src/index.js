@@ -21,6 +21,8 @@ db.ping()
   .then(() => console.log(`[${config.serviceName}] connected to MySQL at ${config.db.host}:${config.db.port}`))
   .catch((err) => console.warn(`[${config.serviceName}] MySQL not reachable yet: ${err.code || err.message}`));
 
+require('./config/schema').initSchema();
+
 let shuttingDown = false;
 
 function shutdown(signal) {
