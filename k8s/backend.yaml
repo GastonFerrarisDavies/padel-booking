@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: tawanchai/padel-user-service:4b3a3d9
+          image: tawanchai/padel-user-service:deca390
           ports:
             - containerPort: 3000
           env:
