@@ -36,7 +36,7 @@ spec:
       containers:
         - name: frontend-app
           # El tag lo actualiza el workflow de CI (.github/workflows/ci.yml).
-          image: tawanchai/padel-frontend:7d902a2
+          image: tawanchai/padel-frontend:f096b84
 
           ports:
             - containerPort: 80
