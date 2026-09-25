@@ -14,6 +14,8 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
+	// JWTSecret verifies tokens issued by user-service. Empty => protected routes always 401.
+	JWTSecret string
 }
 
 func Load() Config {
@@ -24,6 +26,7 @@ func Load() Config {
 		DBUser:     getEnv("DB_USER", "root"),
 		DBPassword: getEnv("DB_PASSWORD", ""),
 		DBName:     getEnv("DB_NAME", "booking_service_db"),
+		JWTSecret:  getEnv("JWT_SECRET", ""),
 	}
 }
 

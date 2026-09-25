@@ -8,11 +8,13 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"gorm.io/gorm"
 
+	"court-service/internal/auth"
 	"court-service/internal/bookings"
 	"court-service/internal/handlers"
 )
 
-func New(db *gorm.DB, bookingsClient *bookings.Client) http.Handler {
+// New wires the routes. GETs are public; every write requires an OWNER/ADMIN token.
+func New(db *gorm.DB, bookingsClient *bookings.Client, jwtSecret string) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -20,7 +22,7 @@ func New(db *gorm.DB, bookingsClient *bookings.Client) http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/health-check", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
@@ -28,22 +30,25 @@ func New(db *gorm.DB, bookingsClient *bookings.Client) http.Handler {
 	courtHandler := handlers.NewCourtHandler(db)
 	complexHandler := handlers.NewComplexHandler(db)
 	availabilityHandler := handlers.NewAvailabilityHandler(db, bookingsClient)
+	adminOnly := auth.RequireRole([]byte(jwtSecret), "OWNER", "ADMIN")
 
 	r.Route("/courts", func(r chi.Router) {
 		r.Get("/", courtHandler.List)
 		r.Get("/availability", availabilityHandler.Availability)
 		r.Get("/occupancy", availabilityHandler.Occupancy)
-		r.Post("/", courtHandler.Create)
 		r.Get("/{id}", courtHandler.Get)
-		r.Put("/{id}", courtHandler.Update)
-		r.Delete("/{id}", courtHandler.Delete)
+
+		r.With(adminOnly).Post("/", courtHandler.Create)
+		r.With(adminOnly).Put("/{id}", courtHandler.Update)
+		r.With(adminOnly).Delete("/{id}", courtHandler.Delete)
 	})
 
 	r.Route("/complexes", func(r chi.Router) {
 		r.Get("/", complexHandler.List)
-		r.Post("/", complexHandler.Create)
 		r.Get("/{id}", complexHandler.Get)
-		r.Put("/{id}/schedule", complexHandler.UpsertSchedule)
+
+		r.With(adminOnly).Post("/", complexHandler.Create)
+		r.With(adminOnly).Put("/{id}/schedule", complexHandler.UpsertSchedule)
 	})
 
 	return r

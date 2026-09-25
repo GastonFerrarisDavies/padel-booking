@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"booking-service/internal/auth"
 	"booking-service/internal/models"
 	"booking-service/internal/repository"
 )
@@ -62,11 +63,17 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set by auth.RequirePlayer; fall back to the raw field if the route is not guarded.
+	playerName := req.PlayerName
+	if player, ok := auth.PlayerFromContext(r.Context()); ok {
+		playerName = player.FullName()
+	}
+
 	booking := models.Booking{
 		ID:         uuid.NewString(),
 		CourtID:    req.CourtID,
 		CourtName:  req.CourtName,
-		PlayerName: req.PlayerName,
+		PlayerName: playerName,
 		Date:       req.Date,
 		StartTime:  req.StartTime,
 		EndTime:    req.EndTime,

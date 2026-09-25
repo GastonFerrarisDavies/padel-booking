@@ -12,6 +12,10 @@ export function getUsers({ role, search } = {}, options) {
   return http.get("/users", { ...options, params: { role, search } });
 }
 
+export function getUsersHealth(options) {
+  return http.get("/users/health-check", options);
+}
+
 export function updateUserRole(id, role) {
   return http.patch(`/users/${id}`, { role });
 }

@@ -133,6 +133,11 @@ spec:
                   key: COURT_DB_PASSWORD
             - name: DB_NAME
               value: court_service_db
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: JWT_SECRET
           resources:
             requests:
               memory: "64Mi"
@@ -198,6 +203,11 @@ spec:
                   key: BOOKING_DB_PASSWORD
             - name: DB_NAME
               value: booking_service_db
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: JWT_SECRET
           resources:
             requests:
               memory: "64Mi"
