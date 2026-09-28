@@ -2,41 +2,23 @@
 
 const { pool } = require('./database');
 const { config } = require('./index');
-const { hashPassword } = require('../utils/password');
 
 const RETRY_DELAY_MS = 5000;
 
-const CREATE_USERS_TABLE = `
-  CREATE TABLE IF NOT EXISTS users (
-    id            CHAR(36)     NOT NULL PRIMARY KEY,
-    name          VARCHAR(120) NOT NULL,
-    email         VARCHAR(255) NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role          ENUM('OWNER', 'ADMIN', 'PLAYER') NOT NULL DEFAULT 'PLAYER',
-    active        BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_users_email (email)
+// Clerk owns identity (name, email, credentials); this table only holds authorization.
+// A row is created the first time a Clerk user calls the API (see services/user.service.js).
+const CREATE_USER_ROLES_TABLE = `
+  CREATE TABLE IF NOT EXISTS user_roles (
+    clerk_id   VARCHAR(64) NOT NULL PRIMARY KEY,
+    role       ENUM('OWNER', 'ADMIN', 'PLAYER') NOT NULL DEFAULT 'PLAYER',
+    active     BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_user_roles_role (role)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 `;
 
-async function seedOwner() {
-  const { email, password, name } = config.owner;
-  if (!email || !password) return;
-
-  const [rows] = await pool.query("SELECT 1 FROM users WHERE role = 'OWNER' LIMIT 1");
-  if (rows.length > 0) return;
-
-  // INSERT IGNORE: several replicas may race here; the unique email keeps one row.
-  await pool.query(
-    "INSERT IGNORE INTO users (id, name, email, password_hash, role) VALUES (UUID(), ?, ?, ?, 'OWNER')",
-    [name, email.trim().toLowerCase(), await hashPassword(password)],
-  );
-  console.log(`[${config.serviceName}] bootstrap OWNER ensured for ${email}`);
-}
-
 async function migrate() {
-  await pool.query(CREATE_USERS_TABLE);
-  await seedOwner();
+  await pool.query(CREATE_USER_ROLES_TABLE);
 }
 
 // Retries in the background so the service can boot before MySQL is ready.

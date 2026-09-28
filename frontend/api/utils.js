@@ -36,64 +36,29 @@ export class ApiError extends Error {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Almacenamiento del token (observable para useSyncExternalStore)           */
+/*  Sesión (Clerk)                                                             */
 /* -------------------------------------------------------------------------- */
 
-const TOKEN_KEY = "padel.token";
-const tokenListeners = new Set();
-let memoryToken = null; // fallback si localStorage no está disponible
-
-function readToken() {
+/**
+ * Token de sesión de Clerk (JWT de ~60 s; Clerk lo renueva y cachea).
+ * No espera a que Clerk cargue: las rutas protegidas solo se piden con la sesión
+ * ya resuelta (AuthProvider / AuthGuard), y así las lecturas públicas no se demoran.
+ */
+async function getSessionToken() {
+  const clerk = typeof window === "undefined" ? undefined : window.Clerk;
+  if (!clerk?.loaded || !clerk.session) return null;
   try {
-    return window.localStorage.getItem(TOKEN_KEY) ?? memoryToken;
+    return await clerk.session.getToken();
   } catch {
-    return memoryToken;
+    return null;
   }
 }
-
-function notifyTokenChange() {
-  tokenListeners.forEach((listener) => listener());
-}
-
-export const tokenStorage = {
-  get() {
-    return typeof window === "undefined" ? null : readToken();
-  },
-  set(token) {
-    memoryToken = token;
-    try {
-      window.localStorage.setItem(TOKEN_KEY, token);
-    } catch {
-      /* modo privado / storage bloqueado: queda en memoria */
-    }
-    notifyTokenChange();
-  },
-  clear() {
-    memoryToken = null;
-    try {
-      window.localStorage.removeItem(TOKEN_KEY);
-    } catch {
-      /* noop */
-    }
-    notifyTokenChange();
-  },
-  /** Compatible con `useSyncExternalStore`. */
-  subscribe(listener) {
-    tokenListeners.add(listener);
-    const onStorage = (event) => event.key === TOKEN_KEY && listener();
-    window.addEventListener("storage", onStorage);
-    return () => {
-      tokenListeners.delete(listener);
-      window.removeEventListener("storage", onStorage);
-    };
-  },
-};
 
 /* -------------------------------------------------------------------------- */
 /*  Interceptores                                                              */
 /* -------------------------------------------------------------------------- */
 
-/** @type {Array<(req: RequestContext) => RequestContext | void>} */
+/** @type {Array<(req: RequestContext) => void | Promise<void>>} */
 const requestInterceptors = [];
 /** @type {Array<(error: ApiError) => void>} */
 const errorInterceptors = [];
@@ -110,15 +75,10 @@ export function addErrorInterceptor(fn) {
   return () => errorInterceptors.splice(errorInterceptors.indexOf(fn), 1);
 }
 
-// Auth: agrega el Bearer token a cada request.
-addRequestInterceptor((ctx) => {
-  const token = tokenStorage.get();
+// Auth: agrega el token de sesión de Clerk a cada request.
+addRequestInterceptor(async (ctx) => {
+  const token = await getSessionToken();
   if (token) ctx.headers.set("Authorization", `Bearer ${token}`);
-});
-
-// Sesión expirada: limpiar token => AuthProvider pasa a "unauthenticated".
-addErrorInterceptor((error) => {
-  if (error.isUnauthorized && tokenStorage.get()) tokenStorage.clear();
 });
 
 /* -------------------------------------------------------------------------- */
@@ -177,7 +137,7 @@ async function request(method, path, { params, body, signal, timeout = DEFAULT_T
     headers: new Headers({ Accept: "application/json" }),
   };
   if (body !== undefined) ctx.headers.set("Content-Type", "application/json");
-  requestInterceptors.forEach((intercept) => intercept(ctx));
+  for (const intercept of requestInterceptors) await intercept(ctx);
 
   let payload;
   let status;

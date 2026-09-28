@@ -14,8 +14,8 @@ import (
 )
 
 // New wires the routes. GETs are public; creating a booking requires the
-// player's name and surname; changing its status requires an OWNER/ADMIN token.
-func New(db *sql.DB, jwtSecret string) http.Handler {
+// player's name and surname; changing its status requires an OWNER/ADMIN session.
+func New(db *sql.DB, verifier *auth.Verifier) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -30,7 +30,7 @@ func New(db *sql.DB, jwtSecret string) http.Handler {
 
 	bookingRepo := repository.NewBookingRepository(db)
 	bookingHandler := handlers.NewBookingHandler(bookingRepo)
-	adminOnly := auth.RequireRole([]byte(jwtSecret), "OWNER", "ADMIN")
+	adminOnly := auth.RequireRole(verifier, "OWNER", "ADMIN")
 
 	r.Route("/bookings", func(r chi.Router) {
 		r.Get("/", bookingHandler.List)

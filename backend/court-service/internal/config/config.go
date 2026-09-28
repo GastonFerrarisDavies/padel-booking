@@ -16,8 +16,8 @@ type Config struct {
 	DBName     string
 	// BookingServiceURL is used by /courts/availability to discard booked slots.
 	BookingServiceURL string
-	// JWTSecret verifies tokens issued by user-service. Empty => protected routes always 401.
-	JWTSecret string
+	// UserServiceURL authorizes Clerk session tokens via its GET /auth/me.
+	UserServiceURL string
 }
 
 func Load() Config {
@@ -29,7 +29,7 @@ func Load() Config {
 		DBPassword:        getEnv("DB_PASSWORD", ""),
 		DBName:            getEnv("DB_NAME", "court_service_db"),
 		BookingServiceURL: getEnv("BOOKING_SERVICE_URL", "http://booking-service"),
-		JWTSecret:         getEnv("JWT_SECRET", ""),
+		UserServiceURL:    getEnv("USER_SERVICE_URL", "http://user-service"),
 	}
 }
 

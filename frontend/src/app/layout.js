@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono, Sora } from "next/font/google";
+import { ClerkProvider } from "@/providers/ClerkProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { SITE } from "@/config/site";
 import "./globals.css";
@@ -12,7 +13,7 @@ export const metadata = {
   description: SITE.description,
 };
 
-/** Server Component. Solo `AuthProvider` es Client; `children` sigue siendo estático. */
+/** Server Component. Solo los providers son Client; `children` sigue siendo estático. */
 export default function RootLayout({ children }) {
   return (
     <html
@@ -20,7 +21,9 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} h-full antialiased`}
     >
       <body className="bg-space flex min-h-full flex-col text-slate-300">
-        <AuthProvider>{children}</AuthProvider>
+        <ClerkProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

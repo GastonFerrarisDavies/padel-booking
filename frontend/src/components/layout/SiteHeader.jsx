@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { CalendarCheck, LogIn } from "lucide-react";
+import { CalendarCheck } from "lucide-react";
 import { publicNav } from "@/config/navigation";
 import { Button } from "@/components/ui/Button";
+import { AuthControls } from "./AuthControls";
 import { Logo } from "./Logo";
 
-/** Server Component. */
+/** Server Component. Solo `AuthControls` es Client (estado de sesión de Clerk). */
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800/60 bg-slate-950/70 backdrop-blur-xl">
@@ -18,12 +19,10 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Button href="/login" variant="ghost" size="sm" leadingIcon={<LogIn className="size-4" />} className="max-sm:hidden">
-            Acceso clubes
-          </Button>
-          <Button href="/#canchas" size="sm" leadingIcon={<CalendarCheck className="size-4" />}>
+          <Button href="/#canchas" size="sm" leadingIcon={<CalendarCheck className="size-4" />} className="max-sm:hidden">
             Reservar
           </Button>
+          <AuthControls />
         </div>
       </div>
     </header>

@@ -1,20 +1,20 @@
 'use strict';
 
-const authService = require('../services/auth.service');
+const { getAuth } = require('@clerk/express');
 const userService = require('../services/user.service');
 const { HttpError } = require('../utils/http-error');
 
-// Verifies the Bearer token and loads the user from the DB, so role changes
-// and deactivations take effect immediately instead of when the token expires.
+// Authentication is Clerk's (clerkMiddleware in app.js verifies the session token);
+// authorization comes from our user_roles table, read on every request so role
+// changes and deactivations take effect immediately.
 async function authenticate(req, res, next) {
-  const [scheme, token] = (req.get('authorization') || '').split(' ');
-  if (scheme !== 'Bearer' || !token) throw new HttpError(401, 'missing bearer token');
+  const { userId } = getAuth(req);
+  if (!userId) throw new HttpError(401, 'missing or invalid session token');
 
-  const { sub } = authService.verifyToken(token);
-  const user = await userService.findById(sub);
-  if (!user || !user.active) throw new HttpError(401, 'invalid or expired token');
+  const access = await userService.ensureAccess(userId);
+  if (!access.active) throw new HttpError(403, 'account is disabled');
 
-  req.user = user;
+  req.user = access;
   next();
 }
 

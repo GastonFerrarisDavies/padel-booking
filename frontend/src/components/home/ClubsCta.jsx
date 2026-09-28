@@ -17,7 +17,7 @@ export function ClubsCta() {
               Panel para gestionar canchas, horarios, reservas y usuarios, con estadísticas de ocupación e ingresos.
             </p>
           </div>
-          <Button href="/login" size="lg" trailingIcon={<ArrowRight className="size-5" />}>
+          <Button href="/dashboard" size="lg" trailingIcon={<ArrowRight className="size-5" />}>
             Acceder al panel
           </Button>
         </div>

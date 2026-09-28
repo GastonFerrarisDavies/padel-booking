@@ -12,6 +12,7 @@ Documentación técnica y reglas de arquitectura del frontend. Leer antes de toc
 | Iconos | `lucide-react` (único set permitido) |
 | Build | `output: 'export'` → **sitio 100 % estático** servido por nginx (ver `Dockerfile`) |
 | Datos | `fetch` nativo encapsulado en `api/utils.jsx` |
+| Auth | **Clerk** vía `@clerk/react` (no `@clerk/nextjs`: su provider de App Router usa Server Actions, incompatibles con el export) |
 
 ### Consecuencias de `output: 'export'`
 
@@ -37,9 +38,9 @@ frontend/
    │  ├─ court/        # componentes de dominio "cancha"
    │  └─ dashboard/    # vistas del panel admin
    ├─ hooks/           # useQuery, useMutation, useToday
-   ├─ providers/       # AuthProvider
+   ├─ providers/       # ClerkProvider (identidad), AuthProvider (identidad + rol)
    ├─ lib/             # cn, format, constants (funciones puras)
-   └─ config/          # site, navigation
+   └─ config/          # site, navigation, clerk (URLs, tema, idioma)
 ```
 
 1. **REGLA DE ORO — ningún componente hace `fetch`.** Los componentes/hook/páginas solo importan funciones de `@entity/*`. Solo `api/utils.jsx` llama a `fetch`.
@@ -56,18 +57,20 @@ frontend/
 
 - **Server por defecto.** Agregar `'use client'` solo si hay estado, efectos, eventos o APIs del navegador.
 - Server (estáticos): `app/**/page.js`, `layout.js`, `Hero`, `Features`, `Footer`, `SiteHeader`, `ui/Card`, `ui/Badge`, `ui/StarRating`, `ui/StatCard`, `ui/DataTable`, `ui/BarChart`, `CourtCard`.
-- Client: todo lo que usa `useQuery`/`useMutation`/estado — `BookingExplorer`, `AvailabilitySearch`, `BookingDialog`, `AuthProvider`, `AuthGuard`, `DashboardShell`, `LoginForm`, `ui/Modal`, `ui/ConfirmDialog` y todas las vistas de `components/dashboard/*`.
+- Client: todo lo que usa `useQuery`/`useMutation`/estado — `BookingExplorer`, `AvailabilitySearch`, `BookingDialog`, `ClerkProvider`, `AuthProvider`, `AuthGuard`, `AuthControls`, `ClerkAuthForm`, `DashboardShell`, `ui/Modal`, `ui/ConfirmDialog` y todas las vistas de `components/dashboard/*`.
 - Sin directiva (sirven en ambos entornos): `ui/Button`, `ui/Field`, `ui/Alert`, `ui/QueryBoundary`, `SlotList`, `CourtArt`.
 - No pasar funciones desde un Server Component a un Client Component.
 
 ## 3. Contrato asumido del backend
 
-Base: `NEXT_PUBLIC_API_URL` (default `/api`). Auth por `Authorization: Bearer <token>`.
+Base: `NEXT_PUBLIC_API_URL` (default `/api`). Auth por `Authorization: Bearer <token de sesión de Clerk>` (lo agrega `api/utils`).
+
+**Autenticación = Clerk** (login, registro, logout, perfil: `/sign-in`, `/sign-up`, `<UserButton>`). No hay login propio.
+**Autorización = user-service**: tabla `user_roles (clerk_id, role, active)`. El primer request de un usuario de Clerk crea su fila como `PLAYER`; court/booking-service autorizan llamando a `GET /auth/me`.
 
 | Método | Ruta | Uso |
 | --- | --- | --- |
-| POST | `/auth/login` | `{ email, password }` → `{ token, user }` |
-| GET | `/auth/me` | usuario de la sesión |
+| GET | `/auth/me` | autorización de la sesión: `{ id (clerk id), role, active, createdAt }` · 401 sin sesión · 403 cuenta deshabilitada |
 | GET | `/courts` | `?status=` lista de canchas |
 | POST / PUT / DELETE | `/courts[/:id]` | CRUD canchas |
 | GET | `/courts/availability` | `?date&time&duration&surface` → canchas con `availableSlots: [{ start, end, price }]` |
@@ -77,10 +80,10 @@ Base: `NEXT_PUBLIC_API_URL` (default `/api`). Auth por `Authorization: Bearer <t
 | PATCH | `/users/:id` | `{ role?, active? }` |
 | GET | `/dashboard/stats` | KPIs + serie de ingresos |
 
-Modelos: `Court { id, name, surface, indoor, pricePerHour, status, rating, reviewsCount }`, `Booking { id, courtId, courtName, playerName, date, startTime, endTime, status, price }`, `User { id, name, email, role, active, createdAt }`. Si el backend real difiere, adaptar **solo** `entity/*` (mapear a estos modelos).
+Modelos: `Court { id, name, surface, indoor, pricePerHour, status, rating, reviewsCount }`, `Booking { id, courtId, courtName, playerName, date, startTime, endTime, status, price }`, `User { id, name, email, role, active, createdAt }` (`id` = id de Clerk; `name`/`email` vienen de Clerk). Si el backend real difiere, adaptar **solo** `entity/*` (mapear a estos modelos).
 ## 4. Roles
 
-`OWNER` (todo, incluido cambiar roles) · `ADMIN` (canchas, horarios, reservas, ver usuarios) · `PLAYER` (sin acceso al dashboard). Constantes en `src/lib/constants.js`.
+`OWNER` (todo, incluido cambiar roles) · `ADMIN` (canchas, horarios, reservas, ver usuarios) · `PLAYER` (sin acceso al dashboard). Constantes en `src/lib/constants.js`. El primer `OWNER` es la cuenta de Clerk cuyo email verificado coincide con `OWNER_EMAIL` de user-service.
 
 ## 5. Sistema de diseño "PULPAD"
 
@@ -135,3 +138,13 @@ npm run lint
 4. Estados obligatorios en toda vista con datos: loading (`Skeleton`), error (`ErrorState` con reintento), vacío (`EmptyState`).
 5. Accesibilidad: `label` asociado, `aria-label` en botones de solo ícono, foco visible, contraste AA.
 6. Ejecutar `npm run lint` y `npm run build` antes de cerrar.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

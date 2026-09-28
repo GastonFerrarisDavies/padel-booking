@@ -52,6 +52,9 @@ jobs:
         with:
           context: ${{ env.BUILD_CONTEXT }}
           push: true
+          # Clave pública de Clerk: variable del repo (Settings → Variables → Actions).
+          build-args: |
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ vars.CLERK_PUBLISHABLE_KEY }}
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
           cache-from: type=gha,scope=${{ env.IMAGE_NAME }}
           cache-to: type=gha,mode=max,scope=${{ env.IMAGE_NAME }}

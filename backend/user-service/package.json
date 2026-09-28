@@ -14,8 +14,8 @@
     "dev": "node --watch --env-file=.env src/index.js"
   },
   "dependencies": {
+    "@clerk/express": "^2.1.72",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.14.0"
   }
 }

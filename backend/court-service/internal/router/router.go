@@ -13,8 +13,8 @@ import (
 	"court-service/internal/handlers"
 )
 
-// New wires the routes. GETs are public; every write requires an OWNER/ADMIN token.
-func New(db *gorm.DB, bookingsClient *bookings.Client, jwtSecret string) http.Handler {
+// New wires the routes. GETs are public; every write requires an OWNER/ADMIN session.
+func New(db *gorm.DB, bookingsClient *bookings.Client, verifier *auth.Verifier) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -30,7 +30,7 @@ func New(db *gorm.DB, bookingsClient *bookings.Client, jwtSecret string) http.Ha
 	courtHandler := handlers.NewCourtHandler(db)
 	complexHandler := handlers.NewComplexHandler(db)
 	availabilityHandler := handlers.NewAvailabilityHandler(db, bookingsClient)
-	adminOnly := auth.RequireRole([]byte(jwtSecret), "OWNER", "ADMIN")
+	adminOnly := auth.RequireRole(verifier, "OWNER", "ADMIN")
 
 	r.Route("/courts", func(r chi.Router) {
 		r.Get("/", courtHandler.List)

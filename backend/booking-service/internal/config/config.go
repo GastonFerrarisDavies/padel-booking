@@ -14,19 +14,19 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
-	// JWTSecret verifies tokens issued by user-service. Empty => protected routes always 401.
-	JWTSecret string
+	// UserServiceURL authorizes Clerk session tokens via its GET /auth/me.
+	UserServiceURL string
 }
 
 func Load() Config {
 	return Config{
-		Port:       getEnv("PORT", "8081"),
-		DBHost:     getEnv("DB_HOST", "127.0.0.1"),
-		DBPort:     getEnv("DB_PORT", "3306"),
-		DBUser:     getEnv("DB_USER", "root"),
-		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBName:     getEnv("DB_NAME", "booking_service_db"),
-		JWTSecret:  getEnv("JWT_SECRET", ""),
+		Port:           getEnv("PORT", "8081"),
+		DBHost:         getEnv("DB_HOST", "127.0.0.1"),
+		DBPort:         getEnv("DB_PORT", "3306"),
+		DBUser:         getEnv("DB_USER", "root"),
+		DBPassword:     getEnv("DB_PASSWORD", ""),
+		DBName:         getEnv("DB_NAME", "booking_service_db"),
+		UserServiceURL: getEnv("USER_SERVICE_URL", "http://user-service"),
 	}
 }
 

@@ -51,25 +51,30 @@ spec:
                   key: USER_DB_PASSWORD
             - name: DB_DATABASE
               value: user_service_db
-            - name: JWT_SECRET
+            # Clerk: autenticación. Los roles viven en la tabla user_roles de este servicio.
+            - name: CLERK_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: db-credentials
-                  key: JWT_SECRET
-            - name: JWT_EXPIRES_IN
-              value: 3600s
-            # Cuenta OWNER inicial (opcional): solo se crea si todavía no hay un OWNER.
+                  name: clerk-credentials
+                  key: CLERK_SECRET_KEY
+            - name: CLERK_PUBLISHABLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clerk-credentials
+                  key: CLERK_PUBLISHABLE_KEY
+            - name: CLERK_AUTHORIZED_PARTIES
+              valueFrom:
+                secretKeyRef:
+                  name: clerk-credentials
+                  key: CLERK_AUTHORIZED_PARTIES
+                  optional: true
+            # OWNER inicial (opcional): la cuenta de Clerk con este email verificado pasa a OWNER
+            # en su primer ingreso, si todavía no hay un OWNER.
             - name: OWNER_EMAIL
               valueFrom:
                 secretKeyRef:
-                  name: db-credentials
+                  name: clerk-credentials
                   key: OWNER_EMAIL
-                  optional: true
-            - name: OWNER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: db-credentials
-                  key: OWNER_PASSWORD
                   optional: true
           resources:
             requests:
@@ -133,11 +138,9 @@ spec:
                   key: COURT_DB_PASSWORD
             - name: DB_NAME
               value: court_service_db
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: db-credentials
-                  key: JWT_SECRET
+            # Autoriza las rutas protegidas vía GET /auth/me de user-service.
+            - name: USER_SERVICE_URL
+              value: http://user-service
           resources:
             requests:
               memory: "64Mi"
@@ -203,11 +206,9 @@ spec:
                   key: BOOKING_DB_PASSWORD
             - name: DB_NAME
               value: booking_service_db
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: db-credentials
-                  key: JWT_SECRET
+            # Autoriza las rutas protegidas vía GET /auth/me de user-service.
+            - name: USER_SERVICE_URL
+              value: http://user-service
           resources:
             requests:
               memory: "64Mi"

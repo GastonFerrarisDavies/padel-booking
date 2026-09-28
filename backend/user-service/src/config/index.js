@@ -5,6 +5,12 @@ const toInt = (value, fallback) => {
   return Number.isNaN(parsed) ? fallback : parsed;
 };
 
+const toList = (value) =>
+  (value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
 const config = Object.freeze({
   serviceName: 'user-service',
   env: process.env.NODE_ENV || 'development',
@@ -18,16 +24,15 @@ const config = Object.freeze({
     database: process.env.DB_DATABASE,
     connectionLimit: toInt(process.env.DB_POOL_SIZE, 10),
   }),
-  jwt: Object.freeze({
-    secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+  // @clerk/express reads CLERK_SECRET_KEY / CLERK_PUBLISHABLE_KEY from the environment itself.
+  clerk: Object.freeze({
+    secretKey: process.env.CLERK_SECRET_KEY,
+    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+    // Origins allowed as the token's `azp` (e.g. https://padel.example.com). Empty => not checked.
+    authorizedParties: Object.freeze(toList(process.env.CLERK_AUTHORIZED_PARTIES)),
   }),
-  // Optional bootstrap account: created as OWNER only if no OWNER exists yet.
-  owner: Object.freeze({
-    name: process.env.OWNER_NAME || 'Owner',
-    email: process.env.OWNER_EMAIL,
-    password: process.env.OWNER_PASSWORD,
-  }),
+  // Clerk account whose primary email matches becomes OWNER on first sign-in, if no OWNER exists yet.
+  ownerEmail: (process.env.OWNER_EMAIL || '').trim().toLowerCase(),
 });
 
 const REQUIRED_SETTINGS = {
@@ -35,7 +40,8 @@ const REQUIRED_SETTINGS = {
   DB_USER: config.db.user,
   DB_PASSWORD: config.db.password,
   DB_DATABASE: config.db.database,
-  JWT_SECRET: config.jwt.secret,
+  CLERK_SECRET_KEY: config.clerk.secretKey,
+  CLERK_PUBLISHABLE_KEY: config.clerk.publishableKey,
 };
 
 function assertConfig() {

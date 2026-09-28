@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/react";
 import { ExternalLink, LogOut, Menu, X } from "lucide-react";
 import { dashboardNav } from "@/config/navigation";
 import { useAuth } from "@/providers/AuthProvider";
@@ -10,7 +11,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { ROLE_LABELS } from "@/lib/constants";
-import { initials } from "@/lib/format";
 import { Logo } from "./Logo";
 
 /**
@@ -72,9 +72,9 @@ export function DashboardShell({ children }) {
 
         <div className="border-t border-slate-800 p-4">
           <div className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-sm font-semibold text-brand-300">
-              {initials(user.name)}
-            </span>
+            {/* Menú de cuenta de Clerk (perfil, seguridad, sesiones). */}
+            <UserButton />
+
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-white">{user.name}</p>
               <Badge tone="brand" className="mt-0.5">

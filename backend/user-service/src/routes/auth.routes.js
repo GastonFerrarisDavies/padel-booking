@@ -6,8 +6,7 @@ const { authenticate } = require('../middlewares/auth');
 
 const router = Router();
 
-router.post('/login', authController.login);
-router.post('/register', authController.register);
+// Sign-in / sign-up happen in Clerk; this service only resolves authorization.
 router.get('/me', authenticate, authController.me);
 
 module.exports = router;
