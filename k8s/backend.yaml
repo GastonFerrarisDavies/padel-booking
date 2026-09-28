@@ -119,7 +119,7 @@ spec:
     spec:
       containers:
         - name: court-service
-          image: tawanchai/padel-court-service:f096b84
+          image: tawanchai/padel-court-service:acd7313
           ports:
             - containerPort: 8080
           env:
