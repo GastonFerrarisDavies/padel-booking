@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: tawanchai/padel-user-service:f9c0bf0
+          image: tawanchai/padel-user-service:acd7313
           ports:
             - containerPort: 3000
           env:
@@ -119,7 +119,7 @@ spec:
     spec:
       containers:
         - name: court-service
-          image: tawanchai/padel-court-service:f096b84
+          image: tawanchai/padel-court-service:acd7313
           ports:
             - containerPort: 8080
           env:
@@ -187,7 +187,7 @@ spec:
     spec:
       containers:
         - name: booking-service
-          image: tawanchai/padel-booking-service:f096b84
+          image: tawanchai/padel-booking-service:acd7313
           ports:
             - containerPort: 8081
           env:
