@@ -187,7 +187,7 @@ spec:
     spec:
       containers:
         - name: booking-service
-          image: tawanchai/padel-booking-service:f096b84
+          image: tawanchai/padel-booking-service:acd7313
           ports:
             - containerPort: 8081
           env:
